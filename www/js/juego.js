@@ -6,10 +6,14 @@ var app = {
         TARGET1_POINTS = 1;
         TARGET2_POINTS = 10;
 
+        NORMAL_BG_COLOR = '#f27d0c';
+        COLLIDE_BG_COLOR = '#400909';
+
         dificultad = 0;
         velocidadX = 0;
         velocidadY = 0;
         puntuacion = 0;
+        isCollideWorld = 0;
 
         alto  = document.documentElement.clientHeight;
         ancho = document.documentElement.clientWidth;
@@ -21,7 +25,7 @@ var app = {
         function preload () {
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
-            game.stage.backgroundColor = '#f27d0c';
+            game.stage.backgroundColor = NORMAL_BG_COLOR;
             game.load.image('bola', 'assets/bola.png');
             game.load.image('objetivo1', 'assets/objetivo1.png');
             game.load.image('objetivo2', 'assets/objetivo2.png');
@@ -42,10 +46,11 @@ var app = {
 
             bola.body.collideWorldBounds = true;
             bola.body.onWorldBounds = new Phaser.Signal();
-            bola.body.onWorldBounds.add(app.decrementaPuntuacion, this);
+            bola.body.onWorldBounds.add(app.onWorldBounds, this);
         }
 
         function update () {
+            app.setStageBackground();
             factorDificultad = (300 + (dificultad * 100));
             bola.body.velocity.x = (velocidadX * (-1 * factorDificultad));
             bola.body.velocity.y = (velocidadY * factorDificultad);
@@ -57,7 +62,12 @@ var app = {
         var estados = { preload: preload, create: create, update: update };
         game = new Phaser.Game(ancho, alto, Phaser.CANVAS, 'phazer', estados);
     },
+    onWorldBounds: function () {
+        isCollideWorld = true;
+        app.decrementaPuntuacion();
+    },
     decrementaPuntuacion: function () {
+        game.stage.backgroundColor = COLLIDE_BG_COLOR;
         puntuacion = puntuacion - 1;
         scoreText.text = puntuacion;
     },
@@ -70,6 +80,14 @@ var app = {
 
         if (puntuacion > 0) {
             dificultad = dificultad + 1;
+        }
+    },
+    setStageBackground: function () {
+        if (isCollideWorld) {
+            game.stage.backgroundColor = COLLIDE_BG_COLOR;
+            isCollideWorld = false;
+        } else {
+            game.stage.backgroundColor = NORMAL_BG_COLOR;
         }
     },
     inicioX: function () {

@@ -9,11 +9,17 @@ var app = {
         NORMAL_BG_COLOR = '#f27d0c';
         COLLIDE_BG_COLOR = '#400909';
 
+        ACLARAR = 1;
+        OSCURECER = -1;
+
         dificultad = 0;
         velocidadX = 0;
         velocidadY = 0;
         puntuacion = 0;
         isCollideWorld = 0;
+
+        stageColor = Phaser.Color.hexToColor(NORMAL_BG_COLOR);
+        stageRBGColor = NORMAL_BG_COLOR;
 
         alto  = document.documentElement.clientHeight;
         ancho = document.documentElement.clientWidth;
@@ -25,7 +31,7 @@ var app = {
         function preload () {
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
-            game.stage.backgroundColor = NORMAL_BG_COLOR;
+            game.stage.backgroundColor = stageRBGColor;
             game.load.image('bola', 'assets/bola.png');
             game.load.image('objetivo1', 'assets/objetivo1.png');
             game.load.image('objetivo2', 'assets/objetivo2.png');
@@ -49,8 +55,8 @@ var app = {
             bola.body.onWorldBounds.add(app.onWorldBounds, this);
         }
 
-        function update () {
-            app.setStageBackground();
+        function update () {   
+            app.setStageBackground();         
             factorDificultad = (300 + (dificultad * 100));
             bola.body.velocity.x = (velocidadX * (-1 * factorDificultad));
             bola.body.velocity.y = (velocidadY * factorDificultad);
@@ -67,9 +73,15 @@ var app = {
         app.decrementaPuntuacion();
     },
     decrementaPuntuacion: function () {
-        game.stage.backgroundColor = COLLIDE_BG_COLOR;
-        puntuacion = puntuacion - 1;
+        puntuacion = puntuacion - 1 >= 0 ? puntuacion - 1 : 0;
         scoreText.text = puntuacion;
+
+        if (puntuacion > 0) {
+            if (dificultad - 1 > 0) {
+                dificultad = dificultad - 1;
+                app.setColorDificultad(OSCURECER);
+            }
+        }
     },
     incrementaPuntuacion: function (ball, target) {
         puntuacion = puntuacion + target.data.points;
@@ -80,6 +92,7 @@ var app = {
 
         if (puntuacion > 0) {
             dificultad = dificultad + 1;
+            app.setColorDificultad(ACLARAR);
         }
     },
     setStageBackground: function () {
@@ -87,8 +100,13 @@ var app = {
             game.stage.backgroundColor = COLLIDE_BG_COLOR;
             isCollideWorld = false;
         } else {
-            game.stage.backgroundColor = NORMAL_BG_COLOR;
+            game.stage.backgroundColor = stageRBGColor;
         }
+    },
+    setColorDificultad: function (flag) {
+        var add =  5*flag;
+        stageColor.r = app.utils.validateColorComponent(Phaser.Color.blendAdd(stageColor.r, add));
+        stageRBGColor = Phaser.Color.RGBtoString(stageColor.r, stageColor.g, stageColor.b);
     },
     inicioX: function () {
         return app.numeroAleatorioHasta(ancho - DIAMETRO_BOLA);
@@ -126,6 +144,19 @@ var app = {
     registraDirecciones: function (datosAceleracion) {
         velocidadX = datosAceleracion.x;
         velocidadY = datosAceleracion.y;
+    },
+    utils: {
+        validateColorComponent: function (color) {
+            if (color < 0) {
+                return 0;
+            } 
+
+            if (color > 255) {
+                return 255;
+            }
+
+            return color;
+        }
     }
 };
 
